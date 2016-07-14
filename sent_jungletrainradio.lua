@@ -26,6 +26,37 @@ ENT.Spawnable = true
 ENT.AdminOnly = false
 ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 
+local a = { a = nil, b = nil } --Table for channels and radios.
+local b = "http://stream1.jungletrain.net:8000/" --URL for the station.
+
+local function jtrCreateSound( ent )
+	--Since 'sound.PlayURL' is client side only, 
+	--we use a if statment to make sure it isn't run on the server.
+	if ( CLIENT ) then
+		if ( ent:IsValid() ) then
+			sound.PlayURL(b, "3d", function( station )
+				--If valid then add the IGModAudioChannel to the table.
+				if ( station:IsValid() ) then
+					station:SetPos( LocalPlayer():GetPos() ) --Set the 3d position to the player's position for debugging.
+					if ( a[ ent:EntIndex() ] == nil ) then
+						a[ ent:EntIndex() ] = {a = ent, b = station } -- Add the station to the 'b' value.
+						print( ent:EntIndex() .. " | " .. ent:GetClass() .. " | Created Channel | " .. tostring( a[ ent:EntIndex() ].b ) ) --Debugging.
+						PrintTable(a) --Debugging.
+					end
+				else
+					LocalPlayer():ChatPrint("Invalid URL!") --Make sure that the URL is valid.
+				end
+			end)
+		end
+	end
+end
+
+local function jtrManageSound()
+end
+
+local function jtrFailSafe()
+end
+
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if ( !tr.Hit ) then return end --If trace doesn't hit something then don't spawn.
 
@@ -46,7 +77,9 @@ function ENT:Initialize()
 	
 	--Enables Physics on Client.
 	self:SetMoveType( MOVETYPE_VPHYSICS )
-	self:SetSolid( SOLID_VPHYSICS )
+	self:SetSolid( SOLID_VPHYSICS ) 
+	
+	jtrCreateSound( self ) --Testing if the radio station is working.
 	
 	if ( SERVER ) then
 		--Only use this Physics on server side or the Physgun beam will fuck up.
@@ -63,7 +96,8 @@ end
 function ENT:OnRemove()
 end
 
-if ( SERVER ) then return end -- We do NOT want to execute anything below in this FILE on SERVER
+--https://github.com/garrynewman/garrysmod/blob/master/garrysmod/lua/entities/sent_ball.lua#L149
+if ( SERVER ) then return end -- We do NOT want to execute anything below in this FILE on SERVER 
 
 function ENT:Draw()
 	--Drawing the model
