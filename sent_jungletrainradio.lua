@@ -1,4 +1,4 @@
---[[JungleTrainRadio by Foul Play]]
+--[[JungleTrainRadio by Foul Play | Version 1.2.0]]
 --[[
 	function() end --A function
 	for() do --A loop
@@ -34,25 +34,57 @@ local function jtrCreateSound( ent )
 	--we use a if statment to make sure it isn't run on the server.
 	if ( CLIENT ) then
 		if ( ent:IsValid() ) then
-			sound.PlayURL(b, "3d", function( station )
+			sound.PlayURL( b, "3d", function( station )
 				--If valid then add the IGModAudioChannel to the table.
 				if ( station:IsValid() ) then
-					station:SetPos( LocalPlayer():GetPos() ) --Set the 3d position to the player's position for debugging.
+					--station:SetPos( LocalPlayer():GetPos() ) --Set the 3d position to the player's position for debugging.
+					
 					if ( a[ ent:EntIndex() ] == nil ) then
-						a[ ent:EntIndex() ] = {a = ent, b = station } -- Add the station to the 'b' value.
+						a[ ent:EntIndex() ] = { a = ent, b = station } -- Add the station to the 'b' value.
+						
 						print( ent:EntIndex() .. " | " .. ent:GetClass() .. " | Created Channel | " .. tostring( a[ ent:EntIndex() ].b ) ) --Debugging.
 						PrintTable(a) --Debugging.
 					end
 				else
 					LocalPlayer():ChatPrint("Invalid URL!") --Make sure that the URL is valid.
 				end
-			end)
+			end )
 		end
 	end
 end
 
 local function jtrManageSound()
+	--Since 'sound.PlayURL' is client side only, 
+	--we use a if statment to make sure it isn't run on the server.
+	if ( CLIENT ) then
+		--Run through the table.
+		for k, v in pairs( a ) do
+			--Make sure that both the entity and stream is valid.
+			if ( v.a:IsValid() and v.b:IsValid() ) then
+				--If the player is 750 hammer units away then pause the stream to make sure
+				--the player doesn't hear it across the map.
+				if ( v.a:GetPos():Distance( LocalPlayer():GetPos() ) > 750 ) then
+					v.b:Pause()
+					else
+					v.b:Play()
+				end
+
+				v.b:SetPos( v.a:GetPos() ) --Set the stream position in the world to the radio's position in the world.
+
+			--If the entity is valid but the stream isn't then make the key in the table nil.
+			elseif ( v.a:IsValid() and not v.b:IsValid() ) then 
+				a[ k ] = nil
+			
+			--If the entity isn't valid but the stream is valid then stop the stream and make the key nil.
+			elseif ( not v.a:IsValid() and v.b:IsValid() ) then
+				v.b:Stop()
+				a[ k ] = nil
+			end
+		end
+	end
 end
+
+timer.Create( "jtrManageSound", .1, 0, function() jtrManageSound() end )
 
 local function jtrFailSafe()
 end
