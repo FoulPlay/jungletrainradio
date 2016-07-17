@@ -1,4 +1,4 @@
---[[JungleTrainRadio by Foul Play | Version 1.2.0]]
+--[[JungleTrainRadio by Foul Play | Version 1.2.1]]
 --[[
 	function() end --A function
 	for() do --A loop
@@ -33,20 +33,20 @@ local function jtrCreateSound( ent )
 	--Since 'sound.PlayURL' is client side only, 
 	--we use a if statment to make sure it isn't run on the server.
 	if ( CLIENT ) then
-		if ( ent:IsValid() ) then
+		if ( IsValid( ent ) ) then
 			sound.PlayURL( b, "3d", function( station )
 				--If valid then add the IGModAudioChannel to the table.
-				if ( station:IsValid() ) then
+				if ( IsValid( station ) ) then
 					--station:SetPos( LocalPlayer():GetPos() ) --Set the 3d position to the player's position for debugging.
 					
 					if ( a[ ent:EntIndex() ] == nil ) then
 						a[ ent:EntIndex() ] = { a = ent, b = station } -- Add the station to the 'b' value.
 						
 						print( ent:EntIndex() .. " | " .. ent:GetClass() .. " | Created Channel | " .. tostring( a[ ent:EntIndex() ].b ) ) --Debugging.
-						PrintTable(a) --Debugging.
+						PrintTable( a ) --Debugging.
 					end
 				else
-					LocalPlayer():ChatPrint("Invalid URL!") --Make sure that the URL is valid.
+					LocalPlayer():ChatPrint( "Invalid URL!" ) --Make sure that the URL is valid.
 				end
 			end )
 		end
