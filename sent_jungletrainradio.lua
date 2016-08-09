@@ -1,4 +1,4 @@
---[[JungleTrainRadio by Foul Play | Version 1.3.0]]
+--[[JungleTrainRadio by Foul Play | Version 1.3.1]]
 --[[
 	function() end --A function
 	for() do --A loop
@@ -17,7 +17,7 @@ AddCSLuaFile()
 
 DEFINE_BASECLASS( "base_anim" )
 
-cleanup.Register("JungleTrain Radio")
+cleanup.Register( "JungleTrain Radio" )
 
 ENT.PrintName = "JungleTrain Radio"
 ENT.Author = "Nathan Binks"
@@ -87,8 +87,8 @@ end
 timer.Create( "jtrManageSound", .1, 0, function() jtrManageSound() end )
 
 function ENT:SetupDataTables()
-	self:NetworkVar("Int", 0, "price")
-	self:NetworkVar("Entity", 1, "owning_ent")
+	self:NetworkVar( "Int", 0, "price" )
+	self:NetworkVar( "Entity", 1, "owning_ent" )
 end
 
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -102,7 +102,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Activate() --Activate the entity.
 	ent:PhysWake() --Makes the entity fall to the ground.
 	
-	ply:AddCleanup("JungleTrain Radio", ent)
+	ply:AddCleanup( "JungleTrain Radio", ent )
 
 	return ent --Return the entity.
 end
@@ -135,8 +135,8 @@ end
 --https://github.com/garrynewman/garrysmod/blob/master/garrysmod/lua/entities/sent_ball.lua#L149
 if ( SERVER ) then return end -- We do NOT want to execute anything below in this FILE on SERVER 
 
-language.Add("Cleanup_JungleTrain Radio", "JungleTrain Radios")
-language.Add("Cleaned_JungleTrain Radio", "Cleaned up JungleTrain Radios")
+language.Add( "Cleanup_JungleTrain Radio", "JungleTrain Radios" )
+language.Add( "Cleaned_JungleTrain Radio", "Cleaned up JungleTrain Radios" )
 
 function ENT:Draw()
 	--Drawing the model
