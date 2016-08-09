@@ -1,4 +1,4 @@
---[[JungleTrainRadio by Foul Play | Version 1.2.1]]
+--[[JungleTrainRadio by Foul Play | Version 1.3.0]]
 --[[
 	function() end --A function
 	for() do --A loop
@@ -17,11 +17,12 @@ AddCSLuaFile()
 
 DEFINE_BASECLASS( "base_anim" )
 
-ENT.PrintName = "JungleTrainRadio"
+cleanup.Register("JungleTrain Radio")
+
+ENT.PrintName = "JungleTrain Radio"
 ENT.Author = "Nathan Binks"
 ENT.Information = "A spawnable internet radio."
-ENT.Category = "Fun + Games"
-
+ENT.Category = "JungleTrain Radio"
 ENT.Spawnable = true
 ENT.AdminOnly = false
 ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
@@ -83,10 +84,11 @@ local function jtrManageSound()
 		end
 	end
 end
-
 timer.Create( "jtrManageSound", .1, 0, function() jtrManageSound() end )
 
-local function jtrFailSafe()
+function ENT:SetupDataTables()
+	self:NetworkVar("Int", 0, "price")
+	self:NetworkVar("Entity", 1, "owning_ent")
 end
 
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -99,6 +101,8 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Spawn() --Spawn the entity.
 	ent:Activate() --Activate the entity.
 	ent:PhysWake() --Makes the entity fall to the ground.
+	
+	ply:AddCleanup("JungleTrain Radio", ent)
 
 	return ent --Return the entity.
 end
@@ -111,7 +115,7 @@ function ENT:Initialize()
 	self:SetMoveType( MOVETYPE_VPHYSICS )
 	self:SetSolid( SOLID_VPHYSICS ) 
 	
-	jtrCreateSound( self ) --Testing if the radio station is working.
+	jtrCreateSound( self ) --Run the function to create the stream.
 	
 	if ( SERVER ) then
 		--Only use this Physics on server side or the Physgun beam will fuck up.
@@ -130,6 +134,9 @@ end
 
 --https://github.com/garrynewman/garrysmod/blob/master/garrysmod/lua/entities/sent_ball.lua#L149
 if ( SERVER ) then return end -- We do NOT want to execute anything below in this FILE on SERVER 
+
+language.Add("Cleanup_JungleTrain Radio", "JungleTrain Radios")
+language.Add("Cleaned_JungleTrain Radio", "Cleaned up JungleTrain Radios")
 
 function ENT:Draw()
 	--Drawing the model
