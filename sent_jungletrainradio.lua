@@ -1,4 +1,4 @@
---[[JungleTrainRadio by Foul Play | Version 1.3.3]]
+--[[JungleTrainRadio by Foul Play | Version 1.3.4]]
 --[[
 	function() end --A function
 	for() do --A loop
@@ -50,7 +50,7 @@ local function jtrCreateSound( ent )
 						a[ ent:EntIndex() ] = { a = ent, b = station } -- Add the station to the 'b' value.
 
 						if ( GetConVar( "jtr_debug" ):GetInt() == 1 ) then
-							print( ent:EntIndex() .. " | " .. ent:GetClass() .. " | Created Channel | " .. tostring( a[ ent:EntIndex() ].b ) ) --Debugging.
+							print( "jtrCreateSound() | " .. ent:EntIndex() .. " | " .. ent:GetClass() .. " | Created Channel | " .. tostring( a[ ent:EntIndex() ].b ) ) --Debugging.
 							PrintTable( a ) --Debugging.
 						end
 					end
@@ -70,19 +70,25 @@ local function jtrManageSound()
 		for k, v in pairs( a ) do
 			--Make sure that both the entity and stream is valid.
 			if ( v.a:IsValid() and v.b:IsValid() ) then
-				--If the player is 750 hammer units away then pause the stream to make sure
-				--the player doesn't hear it across the map.
-				if ( v.a:GetPos():Distance( LocalPlayer():GetPos() ) > 750 ) then
+				--[[If the player is 750 hammer units away then pause the stream to make sure
+				the player doesn't hear it across the map and pause the steam if "jtr_enable" 
+				is set to 0.]]
+				if ( v.a:GetPos():Distance( LocalPlayer():GetPos() ) >= 750 and GetConVar( "jtr_enable" ):GetInt() == 1 ) then
 					v.b:Pause()
-					else
-					v.b:Play()
-				end
 
-				--If the client disables the stream while the stream is playing then pause the stream.
-				if ( GetConVar( "jtr_enable" ):GetInt() == 0 ) then
-					v.b:Pause()
-					else
+					if ( GetConVar( "jtr_debug" ):GetInt() == 1 ) then
+						print( "jtrManageSound() | ".. v.a:EntIndex() .. v.a:GetClass() .. tostring( v.b ) .." | Line 76-81 | I'm Paused!" ) --Debugging
+					end
+
+				elseif ( v.a:GetPos():Distance( LocalPlayer():GetPos() ) < 750 and GetConVar( "jtr_enable" ):GetInt() == 1 ) then
 					v.b:Play()
+
+				elseif ( GetConVar( "jtr_enable" ):GetInt() == 0 ) then
+					v.b:Pause()
+
+					if ( GetConVar( "jtr_debug" ):GetInt() == 1 ) then
+						print( "jtrManageSound() | ".. v.a:EntIndex() .. v.a:GetClass() .. tostring( v.b ) .." | Line 83-88 | I'm Paused!" ) --Debugging
+					end
 				end
 
 				v.b:SetPos( v.a:GetPos() ) --Set the stream position in the world to the radio's position in the world.
@@ -116,7 +122,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Spawn() --Spawn the entity.
 	ent:Activate() --Activate the entity.
 	ent:PhysWake() --Makes the entity fall to the ground.
-	
+
 	ply:AddCleanup( "JungleTrain Radio", ent )
 
 	return ent --Return the entity.
@@ -124,13 +130,13 @@ end
 
 function ENT:Initialize()
 	self:SetModel( "models/props_lab/citizenradio.mdl" ) --Set the model ingame.
-	
+
 	--Enables Physics on Client.
 	self:SetMoveType( MOVETYPE_VPHYSICS )
 	self:SetSolid( SOLID_VPHYSICS ) 
 	
 	jtrCreateSound( self ) --Run the function to create the stream.
-	
+
 	if ( SERVER ) then
 		self:PhysicsInit( SOLID_VPHYSICS ) --Only use this Physics on server side or the Physgun beam will fuck up.
 	end
