@@ -1,4 +1,4 @@
---[[JungleTrainRadio by Foul Play | Version 1.3.4]]
+--[[JungleTrainRadio by Foul Play | Version 1.3.5]]
 --[[
 	function() end --A function
 	for() do --A loop
@@ -35,7 +35,7 @@ ENT.RenderGroup = RENDERGROUP_TRANSLUCENT --TODO: Add information about what it 
 
 local a = { a = nil, b = nil } --Table for channels and radios.
 local b = "http://stream1.jungletrain.net:8000/" --URL for the station.
-CreateClientConVar( "jtr_enable", "1", true, true, "Enable or disable JungleTrain radios stream. DEFAULT 1" ) --Option to pause the stream.
+CreateClientConVar( "jtr_enable", "1", true, false, "Enable or disable JungleTrain radios stream. DEFAULT 1" ) --Option to pause the stream.
 CreateClientConVar( "jtr_debug", "0", false, false, "Enbale debugging for JungleTrainRadio. DEFAULT 0" ) --Option to enabled the debugging.
 
 local function jtrCreateSound( ent )
