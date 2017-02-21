@@ -1,4 +1,4 @@
---[[JungleTrainRadio by Foul Play | Version 1.3.5]]
+--[[JungleTrainRadio by Foul Play | Version 1.3.6]]
 --[[
 	function() end --A function
 	for() do --A loop
@@ -36,7 +36,8 @@ ENT.RenderGroup = RENDERGROUP_TRANSLUCENT --TODO: Add information about what it 
 local a = { a = nil, b = nil } --Table for channels and radios.
 local b = "http://stream1.jungletrain.net:8000/" --URL for the station.
 CreateClientConVar( "jtr_enable", "1", true, false, "Enable or disable JungleTrain radios stream. DEFAULT 1" ) --Option to pause the stream.
-CreateClientConVar( "jtr_debug", "0", false, false, "Enbale debugging for JungleTrainRadio. DEFAULT 0" ) --Option to enabled the debugging.
+CreateClientConVar( "jtr_debug", "0", false, false, "Enable debugging for JungleTrainRadio. DEFAULT 0" ) --Option to enabled the debugging.
+CreateClientConVar( "jtr_volume", "100", true, false, "Change the volume of the streams for JungleTrain radios. DEFAULT 100" )
 
 local function jtrCreateSound( ent )
 	--[[Since 'sound.PlayURL' is client side only, 
@@ -72,7 +73,9 @@ local function jtrManageSound()
 			if ( v.a:IsValid() and v.b:IsValid() ) then
 				--[[If the player is 750 hammer units away then pause the stream to make sure
 				the player doesn't hear it across the map and pause the steam if "jtr_enable" 
-				is set to 0.]]
+				is set to 0. Set the volume to whatever "jtr_volume" is set to, Clamp it and
+				divide by 100 to get decimal numbers because of SetVolume() only goes from
+				0 to 1.]]
 				if ( v.a:GetPos():Distance( LocalPlayer():GetPos() ) >= 750 and GetConVar( "jtr_enable" ):GetInt() == 1 ) then
 					v.b:Pause()
 
@@ -82,7 +85,7 @@ local function jtrManageSound()
 
 				elseif ( v.a:GetPos():Distance( LocalPlayer():GetPos() ) < 750 and GetConVar( "jtr_enable" ):GetInt() == 1 ) then
 					v.b:Play()
-
+					v.b:SetVolume( math.Clamp( GetConVar( "jtr_volume" ):GetInt(), 0, 100 ) / 100 )
 				elseif ( GetConVar( "jtr_enable" ):GetInt() == 0 ) then
 					v.b:Pause()
 
@@ -113,7 +116,7 @@ function ENT:SetupDataTables()
 end
 
 function ENT:SpawnFunction( ply, tr, ClassName )
-	if ( !tr.Hit ) then return end --If trace doesn't hit something then don't spawn.
+	if ( not tr.Hit ) then return end --If trace doesn't hit something then don't spawn.
 
 	local SpawnPos = tr.HitPos + tr.HitNormal * 16 --Spawn in the air.
 	local ent = ents.Create( ClassName ) --Create the entity.
@@ -134,7 +137,7 @@ function ENT:Initialize()
 	--Enables Physics on Client.
 	self:SetMoveType( MOVETYPE_VPHYSICS )
 	self:SetSolid( SOLID_VPHYSICS ) 
-	
+
 	jtrCreateSound( self ) --Run the function to create the stream.
 
 	if ( SERVER ) then
@@ -149,6 +152,26 @@ end
 
 --Call this function when the entity gets removed.
 function ENT:OnRemove()
+end
+
+function ENT:Think()
+	if ( GetConVar( "jtr_volume" ):GetInt() > 100 ) then
+		RunConsoleCommand( "jtr_volume", 100 )
+	elseif ( GetConVar( "jtr_volume" ):GetInt() < 0 ) then
+		RunConsoleCommand( "jtr_volume", 0 )
+	end
+
+	if (GetConVar( "jtr_enable" ):GetInt() > 1 ) then
+		RunConsoleCommand( "jtr_enable", 1 )
+	elseif ( GetConVar( "jtr_enable" ):GetInt() < 0 ) then
+		RunConsoleCommand( "jtr_enable", 0 )
+	end
+
+	if (GetConVar( "jtr_debug" ):GetInt() > 1 ) then
+		RunConsoleCommand( "jtr_debug", 1 )
+	elseif ( GetConVar( "jtr_debug" ):GetInt() < 0 ) then
+		RunConsoleCommand( "jtr_debug", 0 )
+	end
 end
 
 --https://github.com/garrynewman/garrysmod/blob/master/garrysmod/lua/entities/sent_ball.lua#L149
