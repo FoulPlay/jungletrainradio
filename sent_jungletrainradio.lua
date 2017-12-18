@@ -1,4 +1,4 @@
---[[JungleTrainRadio by Foul Play | Version 1.3.6]]
+--[[JungleTrainRadio by Foul Play | Version 1.4.0]]
 --[[
 	function() end --A function
 	for() do --A loop
@@ -34,10 +34,10 @@ ENT.AdminOnly = false --Make it so non-admins can spawn it in.
 ENT.RenderGroup = RENDERGROUP_TRANSLUCENT --TODO: Add information about what it does.
 
 local a = { a = nil, b = nil } --Table for channels and radios.
-local b = "http://stream1.jungletrain.net:8000/" --URL for the station.
+local b = "http://jungletrain.net/128kbps.pls" --URL for the station.
 CreateClientConVar( "jtr_enable", "1", true, false, "Enable or disable JungleTrain radios stream. DEFAULT 1" ) --Option to pause the stream.
 CreateClientConVar( "jtr_debug", "0", false, false, "Enable debugging for JungleTrainRadio. DEFAULT 0" ) --Option to enabled the debugging.
-CreateClientConVar( "jtr_volume", "100", true, false, "Change the volume of the streams for JungleTrain radios. DEFAULT 100" )
+CreateClientConVar( "jtr_volume", "100", true, false, "Change the volume of the streams for JungleTrain radios. DEFAULT 100" ) --Option to change volume of the stream.
 
 local function jtrCreateSound( ent )
 	--[[Since 'sound.PlayURL' is client side only, 
@@ -50,7 +50,7 @@ local function jtrCreateSound( ent )
 					if ( a[ ent:EntIndex() ] == nil ) then
 						a[ ent:EntIndex() ] = { a = ent, b = station } -- Add the station to the 'b' value.
 
-						if ( GetConVar( "jtr_debug" ):GetInt() == 1 ) then
+						if ( GetConVar( "jtr_debug" ):GetInt() >= 1 ) then
 							print( "jtrCreateSound() | " .. ent:EntIndex() .. " | " .. ent:GetClass() .. " | Created Channel | " .. tostring( a[ ent:EntIndex() ].b ) ) --Debugging.
 							PrintTable( a ) --Debugging.
 						end
@@ -76,20 +76,20 @@ local function jtrManageSound()
 				is set to 0. Set the volume to whatever "jtr_volume" is set to, Clamp it and
 				divide by 100 to get decimal numbers because of SetVolume() only goes from
 				0 to 1.]]
-				if ( v.a:GetPos():Distance( LocalPlayer():GetPos() ) >= 750 and GetConVar( "jtr_enable" ):GetInt() == 1 ) then
+				if ( v.a:GetPos():Distance( LocalPlayer():GetPos() ) >= 750 and GetConVar( "jtr_enable" ):GetInt() >= 1 ) then
 					v.b:Pause()
 
-					if ( GetConVar( "jtr_debug" ):GetInt() == 1 ) then
+					if ( GetConVar( "jtr_debug" ):GetInt() >= 1 ) then
 						print( "jtrManageSound() | ".. v.a:EntIndex() .. v.a:GetClass() .. tostring( v.b ) .." | Line 76-81 | I'm Paused!" ) --Debugging
 					end
 
-				elseif ( v.a:GetPos():Distance( LocalPlayer():GetPos() ) < 750 and GetConVar( "jtr_enable" ):GetInt() == 1 ) then
+				elseif ( v.a:GetPos():Distance( LocalPlayer():GetPos() ) < 750 and GetConVar( "jtr_enable" ):GetInt() >= 1 ) then
 					v.b:Play()
 					v.b:SetVolume( math.Clamp( GetConVar( "jtr_volume" ):GetInt(), 0, 100 ) / 100 )
-				elseif ( GetConVar( "jtr_enable" ):GetInt() == 0 ) then
+				elseif ( GetConVar( "jtr_enable" ):GetInt() <= 1 ) then
 					v.b:Pause()
 
-					if ( GetConVar( "jtr_debug" ):GetInt() == 1 ) then
+					if ( GetConVar( "jtr_debug" ):GetInt() >= 1 ) then
 						print( "jtrManageSound() | ".. v.a:EntIndex() .. v.a:GetClass() .. tostring( v.b ) .." | Line 83-88 | I'm Paused!" ) --Debugging
 					end
 				end
@@ -154,32 +154,80 @@ end
 function ENT:OnRemove()
 end
 
+--This is for incase the console commands are set to low or high.
 function ENT:Think()
-	if ( GetConVar( "jtr_volume" ):GetInt() > 100 ) then
-		RunConsoleCommand( "jtr_volume", 100 )
-	elseif ( GetConVar( "jtr_volume" ):GetInt() < 0 ) then
-		RunConsoleCommand( "jtr_volume", 0 )
-	end
-
-	if (GetConVar( "jtr_enable" ):GetInt() > 1 ) then
-		RunConsoleCommand( "jtr_enable", 1 )
-	elseif ( GetConVar( "jtr_enable" ):GetInt() < 0 ) then
-		RunConsoleCommand( "jtr_enable", 0 )
-	end
-
-	if (GetConVar( "jtr_debug" ):GetInt() > 1 ) then
-		RunConsoleCommand( "jtr_debug", 1 )
-	elseif ( GetConVar( "jtr_debug" ):GetInt() < 0 ) then
-		RunConsoleCommand( "jtr_debug", 0 )
-	end
 end
 
 --https://github.com/garrynewman/garrysmod/blob/master/garrysmod/lua/entities/sent_ball.lua#L149
 if ( SERVER ) then return end -- We do NOT want to execute anything below in this FILE on SERVER 
+
+--Test function (WIP)
+hook.Add("PopulateToolMenu", "JungleTrainRadioOptions", function()
+	--Local function for adding gui stuff to the spawn menu.
+	local function Settings(pnl)
+		--[[This shouldn't be called but I haven't found a way for adding panels to the spawn menu
+		anyother way.]]
+		local panel = pnl:AddControl( "CheckBox", { Label = "Enable", Command = "jtr_enable" } )
+		panel:SetValue( GetConVarNumber( "jtr_enable" ) ) --Set the value.
+		panel.OnChange = function(self)
+			--For debugging purpose.
+			if ( GetConVar( "jtr_debug" ):GetInt() >= 1 ) then
+				chat.AddText("Changed Enabled to: " .. GetConVarNumber( "jtr_enable" )) --Add text to the player's chat.
+				chat.PlaySound() --Shouldn't use this but why not? (This going to annoy people...)
+			end
+		end
+		
+		--[[This shouldn't be called but I haven't found a way for adding panels to the spawn menu
+		anyother way.]]
+		local panel = pnl:AddControl( "Slider", { Label = "Volume", Type = "Integer", Command = "jtr_volume", Min = "0", Max = "100" } )
+		panel:SetValue( GetConVarNumber( "jtr_volume" ) ) --Set the value.
+		panel.OnValueChanged = function(self)
+			--For debugging purpose.
+			if ( GetConVar( "jtr_debug" ):GetInt() >= 1 ) then
+				chat.AddText("Changed Volume to: " .. GetConVarNumber( "jtr_volume" )) --Add text to the player's chat.
+				chat.PlaySound() --Shouldn't use this but why not? (This going to annoy people...)
+			end
+		end
+		
+		--[[This shouldn't be called but I haven't found a way for adding panels to the spawn menu
+		anyother way.]]
+		local panel = pnl:AddControl( "CheckBox", { Label = "Debug", Command = "jtr_debug" } )
+		panel:SetValue( GetConVarNumber( "jtr_debug" ) ) --Set the value.
+		panel.OnChange = function(self)
+			--For debugging purpose.
+			if ( GetConVar( "jtr_debug" ):GetInt() >= 1 ) then
+				chat.AddText("Changed Debug to: " .. GetConVarNumber( "jtr_debug" )) --Add text to the player's chat.
+				chat.PlaySound() --Shouldn't use this but why not? (This going to annoy people...)
+			end
+		end
+	end
+	spawnmenu.AddToolMenuOption("Options", "JungleTrain Radio", "JungleTrain Radio", "Settings", "", "", Settings)
+end)
 
 language.Add( "Cleanup_JungleTrain Radio", "JungleTrain Radios" ) --Sets what it says in the cleanup menu in the Spawn Menu.
 language.Add( "Cleaned_JungleTrain Radio", "Cleaned up JungleTrain Radios" ) --Sets what it says when the entity gets cleaned.
 
 function ENT:Draw()
 	self:DrawModel() --Draw the model.
+	
+	local logo = Material("radio_jtr/jungletrain_net_final_wb_60.png") --The load for the radio station.
+	local Pos = self:GetPos() --Get the position of the entity.
+	local Ang = self:GetAngles() --Get the angles of the entity.
+
+	Ang:RotateAroundAxis(Ang:Up(), 90) --Rotate Around Axis Z.
+	Ang:RotateAroundAxis(Ang:Forward(), 90) --Rotate Around Axis Y.
+
+	--Display the logo on the entity.
+	--If the local player is less then 750 Hammer Units away then display the logo.
+	if (self:GetPos():Distance(LocalPlayer():GetPos())) <= 750 then
+		--Start the cam.
+		cam.Start3D2D(Pos + Ang:Up() * 8.6 + Ang:Right() * -21.6, Ang, 0.11)
+
+		surface.SetMaterial(logo) --Set the material to the logo.
+		surface.SetDrawColor(Color(255, 255, 255, 255)) --Set the colour of the logo.
+		surface.DrawTexturedRect(-55, 57, 158, 35) --Draw the logo.
+
+		--End the cam.
+		cam.End3D2D()
+	end
 end
